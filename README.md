@@ -1,6 +1,7 @@
-# EX. NO: 3 HILL CIPHER
-## NAME : DINESH S
-### REG NO : 212224230069
+# HILL CIPHER
+HILL CIPHER
+EX. NO: 3 AIM:
+ #NAME : AARON ALEX P
 
 IMPLEMENTATION OF HILL CIPHER
  
@@ -28,83 +29,70 @@ STEP-4: Multiply the two matrices to obtain the cipher text of length three.
 STEP-5: Combine all these groups to get the complete cipher text.
 
 ## PROGRAM 
-
-```
+~~~
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h> // Include the necessary header for toupper()
-int keymat[3][3] = { { 1, 2, 1 }, { 2, 3, 2 }, { 2, 2, 1 } };
-int invkeymat[3][3] = { { -1, 0, 1 }, { 2, -1, 0 }, { -2, 2, -1 } };
-char key[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-void encode(char a, char b, char c, char ret[4]) {
-int x, y, z;
-int posa = (int) a - 65;
-int posb = (int) b - 65;
-int posc = (int) c - 65;
-x = posa * keymat[0][0] + posb * keymat[1][0] + posc * keymat[2][0];
-y = posa * keymat[0][1] + posb * keymat[1][1] + posc * keymat[2][1]; z = posa * keymat[0][2] + posb * keymat[1][2] + posc * keymat[2][2];
-ret[0] = key[(x % 26 + 26) % 26];
-ret[1] = key[(y % 26 + 26) % 26];
-ret[2] = key[(z % 26 + 26) % 26];
-ret[3] = '\0';
+#include <stdlib.h>
+#define S 2
+int K[S][S] = {{3,3},{2,5}};
+
+int modInv(int a, int m) {
+  a %= m;
+  for (int x = 1; x < m; x++) if ((a * x) % m == 1) return x;
+  return -1;
 }
-void decode(char a, char b, char c, char ret[4]) {
-int x, y, z;
-int posa = (int) a - 65;
-int posb = (int) b - 65;
-int posc = (int) c - 65;
-x = posa * invkeymat[0][0] + posb * invkeymat[1][0] + posc * invkeymat[2][0];
-y = posa * invkeymat[0][1] + posb * invkeymat[1][1] + posc * invkeymat[2][1]; z = posa * invkeymat[0][2] + posb * invkeymat[1][2] + posc * invkeymat[2][2];
-ret[0] = key[(x % 26 + 26) % 26];
-ret[1] = key[(y % 26 + 26) % 26];
-ret[2] = key[(z % 26 + 26) % 26];
-ret[3] = '\0';
+
+int det(int M[S][S]) { return (M[0][0]*M[1][1] - M[0][1]*M[1][0]) % 26; }
+
+void invMat(int M[S][S], int I[S][S]) {
+  int d = det(M); if (d < 0) d += 26;
+  int di = modInv(d, 26); if (di == -1) exit(0);
+  I[0][0] =  M[1][1]*di % 26;
+  I[0][1] = -M[0][1]*di % 26;
+  I[1][0] = -M[1][0]*di % 26;
+  I[1][1] =  M[0][0]*di % 26;
+  for (int i = 0; i < S; i++) for (int j = 0; j < S; j++)
+    if (I[i][j] < 0) I[i][j] += 26;
 }
+
+void mult(int M[S][S], int in[], int out[]) {
+  for (int i = 0; i < S; i++) {
+    out[i] = 0;
+    for (int j = 0; j < S; j++) out[i] += M[i][j]*in[j];
+    out[i] %= 26;
+  }
+}
+
+void hill(char *in, char *out, int enc, int orig_len) {
+  int len = strlen(in), V[S], R[S], KM[S][S];
+  if (!enc) invMat(K, KM); else memcpy(KM, K, sizeof(K));
+
+  if (enc && len % S != 0) {
+    strcat(in, "X");
+    len++;
+  }
+
+  for (int i = 0; i < len; i += S) {
+    for (int j = 0; j < S; j++) V[j] = in[i + j] - 'A';
+    mult(KM, V, R);
+    for (int j = 0; j < S; j++) out[i + j] = R[j] + 'A';
+  }
+  out[len] = 0;
+
+  if (!enc) out[orig_len] = 0;
+}
+
 int main() {
-char msg[1000];
-char enc[1000] = "";
-char dec[1000] = "";
-int n;strcpy(msg, "SecurityLaboratory");
-printf("Simulation of Hill Cipher\n");
-printf("Input message : %s\n", msg);
-for (int i = 0; i < strlen(msg); i++) {
-msg[i] = toupper(msg[i]);
+  char msg[100] = "ALGEBRA";
+  int orig_len = strlen(msg);
+
+  char enc[100], dec[100];
+  hill(msg, enc, 1, orig_len); printf("Encrypted: %s\n", enc);
+  hill(enc, dec, 0, orig_len); printf("Decrypted: %s\n", dec);
 }
-// Remove spaces
-n = strlen(msg) % 3;
-// Append padding text X
-if (n != 0) {
-for (int i = 1; i <= (3 - n); i++) {
-strcat(msg, "X");
-}
-}
-printf("plain text : %s\n", msg);
-for (int i = 0; i < strlen(msg); i += 3) {
-char a = msg[i];
-char b = msg[i + 1];
-char c = msg[i + 2];
-char ret[4];
-encode(a, b, c, ret);
-strcat(enc, ret);
-}
-printf("cipher text : %s\n", enc);
-for (int i = 0; i < strlen(enc); i += 3) {
-char a = enc[i];
-char b = enc[i + 1];
-char c = enc[i + 2];
-char ret[4];
-decode(a, b, c, ret);
-strcat(dec, ret);
-}
-printf("plain text : %s\n", dec);
-return 0;
-}
-```
+~~~
 ## OUTPUT
-
-![image](https://github.com/user-attachments/assets/a2631538-8ec7-4eb2-b871-07eadd39566a)
-
+<img width="1919" height="1093" alt="Screenshot 2025-09-13 093637" src="https://github.com/user-attachments/assets/221a6fdb-3c70-4a37-acf4-1c8277e11f80" />
 
 ## RESULT
-
-The program is executed successfully
+The code has been successfully created and verified.
